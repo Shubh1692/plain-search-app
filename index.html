@@ -1,15 +1,23 @@
 <!DOCTYPE html>
 <html>
-<title>Search App</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3pro.css"> -->
-<header>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
             display: flex;
             align-items: stretch;
             justify-content: flex-start;
             flex-direction: column;
+            width: 100%;
+            margin: 0;
+        }
+
+        form {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;      
+            padding-top: 10px;
             width: 100%;
             margin: 0;
         }
@@ -23,13 +31,9 @@
             max-width: 350px;
         }
 
-        .active {
-            outline: auto;
-        }
 
         input {
-            width: calc(100% - 45px);
-            max-width: 325px;
+            width: calc(100% - 20px);
             padding: 10px;
             margin: 10px;
         }
@@ -52,6 +56,11 @@
             color: blue
         }
 
+        .autocomplete-active .search-key {
+            font-weight: bold;
+            color: black;
+        }
+
         ul {
             margin: 0px 10px 0 10px;
             border-bottom: 1px solid darkgray;
@@ -68,19 +77,94 @@
             align-items: center;
             justify-content: center;
         }
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font: 16px Arial;
+        }
+
+        /*the container must be positioned relative:*/
+        .autocomplete {
+            position: relative;
+            display: inline-block;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        input {
+            background-color: #f1f1f1;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+
+        input[type=text] {
+            background-color: #f1f1f1;
+        }
+
+        input[type=submit] {
+            background-color: DodgerBlue;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            border-top: none;
+            z-index: 99;
+            /*position the autocomplete items to be the same width as the container:*/
+            top: 100%;
+            left: 0;
+            right: 0;
+        }
+
+        .selected-item {
+            position: relative;
+            border: 1px solid #d4d4d4;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #fff;
+            border-bottom: 1px solid #d4d4d4;
+        }
+
+        /*when hovering an item:*/
+        .autocomplete-items div:hover {
+            background-color: #e9e9e9;
+        }
+
+        /*when navigating through the items using the arrow keys:*/
+        .autocomplete-active {
+            background-color: DodgerBlue !important;
+            color: #ffffff;
+        }
+
+        .search-input {
+            border: 1px solid #d4d4d4;
+        }
     </style>
-</header>
+</head>
 
 <body>
-    <div>
-        <div>
-            <input type="text" name="search" value="" autocomplete="off" id="search"
-                placeholder="Search users by ID, address, name..." oninput="onSearch(this)" />
+    <!--Make sure the form has the autocomplete function switched off:-->
+    <form autocomplete="off" action="/action_page.php">
+        <div class="autocomplete">
+            <div class="search-input">
+                <input id="myInput" type="text" placeholder="Search users by ID, address, name...">
+            </div>
+            <div id="selected-item" class="selected-item">
+            </div>
         </div>
-    </div>
-    <div id="listUser" class="list-user">
-    </div>
+    </form>
     <script src="./index.js"></script>
+
 </body>
 
 </html>

@@ -1,5 +1,157 @@
 
-/* Dummy data array */
+/**
+ * This method used for replace all for in case sensitive mode
+ */
+String.prototype.replaceAll = function (strReplace, strWith) {
+    // See http://stackoverflow.com/a/3561711/556609
+    var esc = strReplace.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    var reg = new RegExp(esc, 'ig');
+    return this.replace(reg, strWith);
+};
+function autocomplete(inp, arr) {
+    let currentFocus;
+    /*execute a function when someone writes in the text field:*/
+    inp.addEventListener("input", function (e) {
+        let a, b, i, val = this.value;
+        /*close any already open lists of autocompleted values*/
+        closeAllLists();
+        const selectedElementDiv = document.getElementById('selected-item');
+        selectedElementDiv.style.display = 'none';
+        if (!val) { return false; }
+        currentFocus = -1;
+        /*create a DIV element that will contain the items (values):*/
+        a = document.createElement("DIV");
+        a.setAttribute("id", this.id + "autocomplete-list");
+        a.setAttribute("class", "autocomplete-items");
+        /*append the DIV element as a child of the autocomplete container:*/
+        this.parentNode.appendChild(a);
+        const userSectionUI = `
+                <h3><b>{{id}}</b></h3>
+                <h4><b><i>{{name}}</i></b></h4>
+                {{itemSearch}}
+                <p>{{address}} {{pincode}}</p>
+            `;
+        const filterObj = {
+            "id": val.toLowerCase(),
+            "name": val.toLowerCase(),
+            "items": val.toLowerCase(),
+            "address": val.toLowerCase(),
+            "pincode": val.toLowerCase(),
+        };
+        filteredArray = val && val.trim().length ? arr.filter((item, index) => {
+            let notMatchingField = Object.keys(filterObj)
+                .find(key => item[key] instanceof Array ? item[key].join(' ').toLowerCase().includes(filterObj[key]) : item[key].toLowerCase().includes(filterObj[key]));
+            if (notMatchingField === 'items') {
+                arr[index].searchByItemsValue = item.items.findIndex((item) => item.toLowerCase().includes(val.toLowerCase()));
+            }
+            return notMatchingField;
+        }) : [...arr];
+        if (!filteredArray.length) {
+            return a.innerHTML = `<div class="no-data">
+            No User Found
+        </div>`
+        }
+        filteredArray.forEach((userInformation, index) => {
+            let uiInfo = userSectionUI;
+            if (typeof userInformation.searchByItemsValue === 'number') {
+                uiInfo = uiInfo.replace(new RegExp(`{{itemSearch}}`, "g"), `<ul>
+            <li>
+            <span class="capitalize"> ${
+                userInformation.items[userInformation.searchByItemsValue].replaceAll(val, `<span class="search-key">${val.toLowerCase()}</span>`)
+            } </span> found in items
+            </li>
+        </ul>`);
+            } else {
+                uiInfo = uiInfo.replace(new RegExp(`{{itemSearch}}`, "g"), '');
+            }
+            delete userInformation.searchByItemsValue;
+            for (let key in userInformation) {
+                if (typeof userInformation[key] === 'string') {
+                    uiInfo = uiInfo.replace(new RegExp("{{" + key + "}}", "g"),  userInformation[key].replaceAll(val, `<span class="search-key">${val.toLowerCase()}</span>`));
+                }
+               
+            }
+            uiInfo = uiInfo.replace(new RegExp("{{index}}", "g"), index);
+            uiInfo = uiInfo.replace(/(\{{).+?(\}})/g, " ");
+            // if (val)
+            //     uiInfo = uiInfo.replaceAll(val, `<span class="search-key">${val.toLowerCase()}</span>`);
+
+            /*create a DIV element for each matching element:*/
+            b = document.createElement("DIV");
+            b.innerHTML = uiInfo;
+            /*execute a function when someone clicks on the item value (DIV element):*/
+            b.addEventListener("click", function (e) {
+                console.log(e)
+                /*insert the value for the autocomplete text field:*/
+                const selectedElementDiv = document.getElementById('selected-item');
+                selectedElementDiv.innerHTML = `<h3> Selected Infomation </h3> <br/> ${b.innerHTML}`;
+                selectedElementDiv.style.display = 'block';
+                // selectedElementDiv.innerHTML = e.target.i
+                /*close the list of autocompleted values,
+                (or any other open lists of autocompleted values:*/
+                closeAllLists();
+            });
+            a.appendChild(b);
+        });
+    });
+    /*execute a function presses a key on the keyboard:*/
+    inp.addEventListener("keydown", function (e) {
+        let x = document.getElementById(this.id + "autocomplete-list");
+        if (x) x = x.getElementsByTagName("div");
+        if (e.keyCode == 40) {
+            /*If the arrow DOWN key is pressed,
+            increase the currentFocus variable:*/
+            currentFocus++;
+            /*and and make the current item more visible:*/
+            addActive(x);
+        } else if (e.keyCode == 38) { //up
+            /*If the arrow UP key is pressed,
+            decrease the currentFocus variable:*/
+            currentFocus--;
+            /*and and make the current item more visible:*/
+            addActive(x);
+        } else if (e.keyCode == 13) {
+            /*If the ENTER key is pressed, prevent the form from being submitted,*/
+            e.preventDefault();
+            if (currentFocus > -1) {
+                /*and simulate a click on the "active" item:*/
+                if (x) x[currentFocus].click();
+            }
+        }
+    });
+    function addActive(x) {
+        /*a function to classify an item as "active":*/
+        if (!x) return false;
+        /*start by removing the "active" class on all items:*/
+        removeActive(x);
+        if (currentFocus >= x.length) currentFocus = 0;
+        if (currentFocus < 0) currentFocus = (x.length - 1);
+        /*add class "autocomplete-active":*/
+        x[currentFocus].classList.add("autocomplete-active");
+    }
+    function removeActive(x) {
+        /*a function to remove the "active" class from all autocomplete items:*/
+        for (let i = 0; i < x.length; i++) {
+            x[i].classList.remove("autocomplete-active");
+        }
+    }
+    function closeAllLists(elmnt) {
+        /*close all autocomplete lists in the document,
+        except the one passed as an argument:*/
+        const x = document.getElementsByClassName("autocomplete-items");
+        for (let i = 0; i < x.length; i++) {
+            if (elmnt != x[i] && elmnt != inp) {
+                x[i].parentNode.removeChild(x[i]);
+            }
+        }
+    }
+    /*execute a function when someone clicks in the document:*/
+    document.addEventListener("click", function (e) {
+        closeAllLists(e.target);
+    });
+}
+
+/*An array containing all the user information*/
 const mockUserArray = [
     {
         "id": "123-s2-546",
@@ -64,174 +216,7 @@ const mockUserArray = [
         "address": "Riverbed Apartment",
         "pincode": "4xx032"
     }
-];
-let filteredArray = []; // Filtered Array list
-let selectedIndex = null; // current selected card index information in UI
-let previousIndex = null; // previous selected card index information in UI
-document.onkeydown = checkKey; // Add Key event
-/**
- * This method used for replace all for in case sensitive mode
- */
-String.prototype.replaceAll = function (strReplace, strWith) {
-    // See http://stackoverflow.com/a/3561711/556609
-    var esc = strReplace.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-    var reg = new RegExp(esc, 'ig');
-    return this.replace(reg, strWith);
-};
-/**
- * This method used to filer array and search
- * @param {string} search 
- */
-function displayArray(search = '') {
-    const actualArray = [...mockUserArray];
-    const userSectionUI = `
-                <h3><b>{{id}}</b></h3>
-                <h4><b><i>{{name}}</i></b></h4>
-                {{itemSearch}}
-                <p>{{address}} {{pincode}}</p>
-            `;
-    const filterObj = {
-        "id": search.toLowerCase(),
-        "name": search.toLowerCase(),
-        "items": search.toLowerCase(),
-        "address": search.toLowerCase(),
-        "pincode": search.toLowerCase(),
-    };
-    filteredArray = search && search.trim().length ? actualArray.filter((item, index) => {
-        let notMatchingField = Object.keys(filterObj)
-            .find(key => item[key] instanceof Array ? item[key].join(' ').toLowerCase().includes(filterObj[key]) : item[key].toLowerCase().includes(filterObj[key]));
-        if (notMatchingField === 'items') {
-            actualArray[index].searchByItemsValue = item.items.findIndex((item) => item.toLowerCase().includes(search.toLowerCase()));
-        }
-        return notMatchingField;
-    }) : [...actualArray];
-    const listUserHtml = filteredArray.map((userInformation, index) => {
-        let uiInfo = userSectionUI;
-        if (typeof userInformation.searchByItemsValue === 'number') {
-            uiInfo = uiInfo.replace(new RegExp(`{{itemSearch}}`, "g"), `<ul>
-            <li>
-            <span class="capitalize"> ${userInformation.items[userInformation.searchByItemsValue]} </span> found in items
-            </li>
-        </ul>`);
-        } else {
-            uiInfo = uiInfo.replace(new RegExp(`{{itemSearch}}`, "g"), '');
-        }
-        delete userInformation.searchByItemsValue;
-        for (let key in userInformation) {
-            uiInfo = uiInfo.replace(new RegExp("{{" + key + "}}", "g"), userInformation[key]);
-        }
-        uiInfo = uiInfo.replace(new RegExp("{{index}}", "g"), index);
-        uiInfo = uiInfo.replace(/(\{{).+?(\}})/g, " ");
-        if (search)
-            uiInfo = uiInfo.replaceAll(search, `<span class="search-key">${search.toLowerCase()}</span>`);
-        uiInfo = `<div class="card" id="{{id}}" onclick="onSelect('{{index}}')">
-        <div class="container">${uiInfo}
-        </div>
-        </div>`
-        return uiInfo;
-    }).join('');
-    document.getElementById('listUser').innerHTML = listUserHtml || `<div class="card" id="{{id}}" onclick="onSelect('{{index}}')">
-            <div class="container">
-                <div class="no-data">
-                    No User Found
-                </div>
-            </div>
-        </div>`;
-}
+];;
 
-/**
- * This method used to detect upper/down key keyboard event
- * @param {object} e 
- */
-function checkKey(e) {
-    e = e || window.event;
-    switch (e.keyCode) {
-        case 38:
-            // up arrow
-            e.preventDefault();
-            onNavigation('up');
-            break;
-        case 40:
-            // down arrow
-            e.preventDefault();
-            onNavigation('down');
-            break;
-        default:
-            break;
-    }
-}
-/**
- * This method used to set selected element index according to keyboard navigation direction
- * @param {string} navDirection 'up | down'
- */
-function onNavigation(navDirection) {
-    if (typeof selectedIndex !== 'number' && filteredArray.length) {
-        selectedIndex = navDirection === 'up' ? filteredArray.length - 1 : 0;
-    } else if (typeof selectedIndex === 'number' && filteredArray.length) {
-        if (navDirection === 'up') {
-            selectedIndex = selectedIndex === 0 ? filteredArray.length - 1 : selectedIndex - 1;
-        } else {
-            selectedIndex = selectedIndex === filteredArray.length - 1 ? 0 : selectedIndex + 1;
-        }
-    }
-    if (typeof selectedIndex === 'number') {
-        onSelectElement();
-    }
-}
-
-/**
- * This method used to set style or class on selected element  
- */
-function onSelectElement() {
-    const selectedElement = document.getElementById(filteredArray[selectedIndex].id);
-    if (selectedElement) {
-        if (!checkElementOnScreen(selectedElement)) {
-            selectedElement.scrollIntoView();
-        }
-        selectedElement.classList.add("active");
-        if (typeof previousIndex === 'number') {
-            const preSelectedElement = document.getElementById(filteredArray[previousIndex].id);
-            if (preSelectedElement) {
-                preSelectedElement.classList.remove("active");
-            }
-        }
-        previousIndex = selectedIndex;
-    }
-}
-
-/**
- * This method used to check selected element on visible on screen or not
- * If no move it to in view using scroll event
- * @param {string} id 
- */
-function checkElementOnScreen(selectedElement) {
-    const rect = selectedElement.getBoundingClientRect();
-    const isInViewport = rect.top >= 0 &&
-        rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-        rect.right <= (window.innerWidth || document.documentElement.clientWidth);
-    return isInViewport;
-}
-/**
- * This method used to perform click event on select card
- * @param {string} id 
- */
-function onSelect(id) {
-    id = Number(id)
-    if (!isNaN(id) && selectedIndex !== id) {
-        selectedIndex = id;
-        onSelectElement();
-    }
-}
-/**
- * This method used to filter using search input box
- */
-function onSearch(obj) {
-    selectedIndex = null;
-    previousIndex = null;
-    displayArray(obj.value);
-}
-/**
- * Call method at onload to display initial list
- */
-displayArray();
+/*initiate the autocomplete function on the "myInput" element, and pass along the countries array as possible autocomplete values:*/
+autocomplete(document.getElementById("myInput"), mockUserArray);
