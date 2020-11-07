@@ -8,6 +8,7 @@ String.prototype.replaceAll = function (strReplace, strWith) {
     var reg = new RegExp(esc, 'ig');
     return this.replace(reg, strWith);
 };
+const baseUrl = window.location.host.includes('localhost') ? 'http://localhost:8080' : ''
 function autocomplete(inp) {
     let currentFocus;
     /*execute a function when someone writes in the text field:*/
@@ -18,7 +19,7 @@ function autocomplete(inp) {
         const selectedElementDiv = document.getElementById('selected-item');
         selectedElementDiv.style.display = 'none';
         if (!val) { return false; }
-        const suggestionReq = await fetch(`http://localhost:8080/getSuggestion/${val}`);
+        const suggestionReq = await fetch(`${baseUrl}/getSuggestion/${val}`);
         const suggestionRes = await suggestionReq.json();
         console.log(suggestionRes);
         const filteredArray = suggestionRes.employees;
