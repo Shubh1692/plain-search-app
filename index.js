@@ -8,16 +8,20 @@ String.prototype.replaceAll = function (strReplace, strWith) {
     var reg = new RegExp(esc, 'ig');
     return this.replace(reg, strWith);
 };
-function autocomplete(inp, arr) {
+function autocomplete(inp) {
     let currentFocus;
     /*execute a function when someone writes in the text field:*/
-    inp.addEventListener("input", function (e) {
+    inp.addEventListener("input", async function (e) {
         let a, b, i, val = this.value;
         /*close any already open lists of autocompleted values*/
         closeAllLists();
         const selectedElementDiv = document.getElementById('selected-item');
         selectedElementDiv.style.display = 'none';
         if (!val) { return false; }
+        const suggestionReq = await fetch(`http://localhost:8080/getSuggestion/${val}`);
+        const suggestionRes = await suggestionReq.json();
+        console.log(suggestionRes);
+        const filteredArray = suggestionRes.employees;
         currentFocus = -1;
         /*create a DIV element that will contain the items (values):*/
         a = document.createElement("DIV");
@@ -29,28 +33,8 @@ function autocomplete(inp, arr) {
                 <h3><b>{{id}}</b></h3>
                 <h4><b><i>{{name}}</i></b></h4>
                 {{itemSearch}}
-                <p>{{address}} {{pincode}}</p>
+                <p>{{email}}</p>
             `;
-        const filterObj = {
-            "id": val.toLowerCase(),
-            "name": val.toLowerCase(),
-            "items": val.toLowerCase(),
-            "address": val.toLowerCase(),
-            "pincode": val.toLowerCase(),
-        };
-        filteredArray = val && val.trim().length ? arr.filter((item, index) => {
-            let notMatchingField = Object.keys(filterObj)
-                .find(key => item[key] instanceof Array ? item[key].join(' ').toLowerCase().includes(filterObj[key]) : item[key].toLowerCase().includes(filterObj[key]));
-            if (notMatchingField === 'items') {
-                arr[index].searchByItemsValue = item.items.findIndex((item) => item.toLowerCase().includes(val.toLowerCase()));
-            }
-            return notMatchingField;
-        }) : [...arr];
-        if (!filteredArray.length) {
-            return a.innerHTML = `<div class="no-data">
-            No User Found
-        </div>`
-        }
         filteredArray.forEach((userInformation, index) => {
             let uiInfo = userSectionUI;
             if (typeof userInformation.searchByItemsValue === 'number') {
@@ -151,72 +135,5 @@ function autocomplete(inp, arr) {
     });
 }
 
-/*An array containing all the user information*/
-const mockUserArray = [
-    {
-        "id": "123-s2-546",
-        "name": "John Jacobs",
-        "items": ["bucket", "bottle"],
-        "address": "1st Cross, 9th Main, abc Apartment",
-        "pincode": "5xx012"
-    },
-    {
-        "id": "123-s3-146",
-        "name": "David Mire",
-        "items": ["Bedroom Set"],
-        "address": "2nd Cross, BTI Apartment",
-        "pincode": "4xx012"
-    },
-    {
-        "id": "223-a1-234",
-        "name": "Soloman Marshall",
-        "items": ["bottle"],
-        "address": "Riverbed Apartment",
-        "pincode": "4xx032"
-    },
-    {
-        "id": "121-s2-111",
-        "name": "Ricky Beno",
-        "items": ["Mobile Set"],
-        "address": "Sunshine City",
-        "pincode": "5xx072"
-    },
-    {
-        "id": "123-p2-246",
-        "name": "Sikander Singh",
-        "items": ["Air Conditioner"],
-        "address": "Riverbed Apartment",
-        "pincode": "4xx032"
-    },
-    {
-        "id": "b23-s2-321",
-        "name": "Ross Wheeler",
-        "items": ["Mobile"],
-        "address": "1st Cross, 9th Main, abc Apartement",
-        "pincode": "5xx012"
-    },
-    {
-        "id": "113-n2-563",
-        "name": "Ben Bish",
-        "items": ["Kitchen Set", "Chair"],
-        "address": "Sunshine City",
-        "pincode": "5xx072"
-    },
-    {
-        "id": "323-s2-112",
-        "name": "John Michael",
-        "items": ["Refrigerator"],
-        "address": "1st Cross, 9th Main, abc Apartement",
-        "pincode": "5xx012"
-    },
-    {
-        "id": "abc-34-122",
-        "name": "Jason Jordan",
-        "items": ["Mobile"],
-        "address": "Riverbed Apartment",
-        "pincode": "4xx032"
-    }
-];;
-
 /*initiate the autocomplete function on the "myInput" element, and pass along the countries array as possible autocomplete values:*/
-autocomplete(document.getElementById("myInput"), mockUserArray);
+autocomplete(document.getElementById("myInput"));
